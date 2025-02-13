@@ -12,12 +12,11 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  REGISTRY_IMAGE: lobehub/lobe-chat-database
+  REGISTRY_IMAGE: jiusheng/lobe-chat-database
   PR_TAG_PREFIX: pr-
 
 jobs:
   build:
-    # 添加 PR label 触发条件
     if: |
       (github.event_name == 'pull_request' &&
        contains(github.event.pull_request.labels.*.name, 'Build Docker')) ||
@@ -46,7 +45,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 为 PR 生成特殊的 tag
       - name: Generate PR metadata
         if: github.event_name == 'pull_request'
         id: pr_meta
@@ -61,9 +59,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY_IMAGE }}
           tags: |
-            # PR 构建使用特殊的 tag
             type=raw,value=${{ env.PR_TAG_PREFIX }}${{ steps.pr_meta.outputs.pr_tag }},enable=${{ github.event_name == 'pull_request' }}
-            # release 构建使用版本号
             type=semver,pattern={{version}},enable=${{ github.event_name != 'pull_request' }}
             type=raw,value=latest,enable=${{ github.event_name != 'pull_request' }}
 
@@ -125,7 +121,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 为 merge job 添加 PR metadata 生成
       - name: Generate PR metadata
         if: github.event_name == 'pull_request'
         id: pr_meta
